@@ -3,6 +3,7 @@ const FIELD_META = {
     title: 'Цикл',
     fields: {
       screenIntervalSec: { label: 'Интервал скрининга, сек', step: 5 },
+      positionCheckIntervalSec: { label: 'Проверка позиций, сек', step: 5 },
       noTradeUpdateMin: { label: 'NO TRADE апдейт, мин', step: 1 },
       signalCooldownMin: { label: 'Кулдаун сигнала, мин', step: 1 },
       lossStreakPauseMin: { label: 'Пауза после 2 убытков, мин', step: 1 },

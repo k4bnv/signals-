@@ -23,8 +23,7 @@ function log(...args) {
 
 async function runCycle() {
   if (isPaused()) {
-    log('пауза после серии убытков — пропускаю поиск новых сигналов, мониторинг позиций продолжается');
-    await monitorPositions();
+    log('пауза после серии убытков — пропускаю поиск новых сигналов');
     return;
   }
 
@@ -63,31 +62,51 @@ async function runCycle() {
     await sendTelegram(formatNoTradeMessage(rejections));
     markNoTradeSent();
   }
-
-  await monitorPositions();
 }
 
-let running = false;
-async function tick() {
-  if (running) {
-    log('предыдущий цикл ещё выполняется, пропускаю тик');
+let screeningRunning = false;
+async function screeningTick() {
+  if (screeningRunning) {
+    log('предыдущий цикл скрининга ещё выполняется, пропускаю тик');
     return;
   }
-  running = true;
+  screeningRunning = true;
   try {
     await runCycle();
   } catch (err) {
-    log('ошибка цикла:', err.stack || err.message);
+    log('ошибка цикла скрининга:', err.stack || err.message);
   } finally {
-    running = false;
+    screeningRunning = false;
   }
 }
 
-async function loop() {
-  await tick();
+async function screeningLoop() {
+  await screeningTick();
   // re-read the interval each time so changes made from the web dashboard
   // take effect on the next cycle without restarting the process
-  setTimeout(loop, config.loop.screenIntervalSec * 1000);
+  setTimeout(screeningLoop, config.loop.screenIntervalSec * 1000);
+}
+
+// Position monitoring is far cheaper than screening (one account call + a
+// candle fetch per open position) and shouldn't wait on the slower screening
+// interval, so it runs on its own faster loop. It keeps running even while
+// screening is paused after a loss streak.
+let positionsRunning = false;
+async function positionsTick() {
+  if (positionsRunning) return;
+  positionsRunning = true;
+  try {
+    await monitorPositions();
+  } catch (err) {
+    log('ошибка мониторинга позиций:', err.stack || err.message);
+  } finally {
+    positionsRunning = false;
+  }
+}
+
+async function positionsLoop() {
+  await positionsTick();
+  setTimeout(positionsLoop, config.loop.positionCheckIntervalSec * 1000);
 }
 
 async function main() {
@@ -96,7 +115,8 @@ async function main() {
   log(`OKX ключи: ${hasOkxKeys() ? 'есть (мониторинг позиций включен)' : 'нет (только скрининг/сигналы)'}`);
 
   startServer();
-  loop();
+  screeningLoop();
+  positionsLoop();
 }
 
 main().catch((err) => {

@@ -33,6 +33,7 @@ export const config = {
   },
   loop: {
     screenIntervalSec: num(process.env.SCREEN_INTERVAL_SEC, 120),
+    positionCheckIntervalSec: num(process.env.POSITION_CHECK_INTERVAL_SEC, 20),
     noTradeUpdateMin: num(process.env.NO_TRADE_UPDATE_MIN, 20),
     signalCooldownMin: num(process.env.SIGNAL_COOLDOWN_MIN, 30),
     lossStreakPauseMin: num(process.env.LOSS_STREAK_PAUSE_MIN, 45),
