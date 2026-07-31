@@ -10,6 +10,8 @@ import {
   recordTradeResult,
   pauseAfterLosses,
   updateSignalStatus,
+  hasOpenSignalRecord,
+  addSignalRecord,
 } from './state.js';
 import { sendTelegram } from './telegram.js';
 import { formatPositionAlert } from './messages.js';
@@ -54,6 +56,25 @@ export async function monitorPositions() {
       alertedNearStop: false,
       alertedStFlip: false,
     };
+
+    // Position monitor watches every open OKX position, not just pairs the bot
+    // signaled itself. If there's no journal entry for this pair (manually
+    // opened trade, or a signal from before a state reset), create one so it
+    // shows up in the dashboard and can later be marked closed.
+    if (!hasOpenSignalRecord(p.instId)) {
+      addSignalRecord({
+        instId: p.instId,
+        entryLow: avgPx,
+        entryHigh: avgPx,
+        stop: null,
+        tp1: null,
+        tp2: null,
+        leverage: Number(p.lever) || null,
+        marginUsdt: null,
+        score: null,
+        source: 'manual',
+      });
+    }
 
     const sig = getLastSignal(p.instId);
     const tp1Trigger = sig ? sig.tp1 : avgPx * (1 + GENERIC_TP1_PCT / 100);

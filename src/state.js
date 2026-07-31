@@ -131,15 +131,31 @@ export function addSignalRecord(rec) {
   return entry;
 }
 
-// Patches the most recent still-open (or tp1_hit) journal entry for instId, if any.
+// Patches the most recent still-open (or tp1_hit) journal entry for instId.
+// The bot may have sent several signals for the same pair over time (each time
+// the cooldown expires and the setup re-qualifies); only one can correspond to
+// a real OKX position. The newest matching entry gets the real outcome; any
+// older still-open duplicates for the same pair are marked 'expired' (not
+// counted as win/loss) instead of being left open forever.
 export function updateSignalStatus(instId, patch) {
-  const rec = state.signals.find(
+  const matches = state.signals.filter(
     (s) => s.instId === instId && (s.status === 'open' || s.status === 'tp1_hit')
   );
-  if (!rec) return null;
-  Object.assign(rec, patch);
+  if (!matches.length) return null;
+  const [latest, ...stale] = matches; // signals array is newest-first
+  Object.assign(latest, patch);
+  for (const rec of stale) {
+    rec.status = 'expired';
+    rec.expiredAt = Date.now();
+  }
   saveState();
-  return rec;
+  return latest;
+}
+
+export function hasOpenSignalRecord(instId) {
+  return state.signals.some(
+    (s) => s.instId === instId && (s.status === 'open' || s.status === 'tp1_hit')
+  );
 }
 
 export function getSignals(limit = 100) {

@@ -151,5 +151,8 @@ th { color: var(--muted); font-weight: 500; font-size: 12px; }
 .badge.tp1_hit { color: var(--yellow); border-color: var(--yellow); }
 .badge.closed_win { color: var(--green); border-color: var(--green); }
 .badge.closed_loss { color: var(--red); border-color: var(--red); }
+.badge.expired { color: var(--muted); border-color: var(--border); }
+
+.hint-inline { color: var(--muted); font-size: 11px; }
 
 .empty-row td { color: var(--muted); text-align: center; padding: 20px; }

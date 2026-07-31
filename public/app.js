@@ -45,6 +45,7 @@ const STATUS_LABELS = {
   tp1_hit: 'TP1 взят',
   closed_win: 'закрыт (профит)',
   closed_loss: 'закрыт (убыток)',
+  expired: 'неактуален',
 };
 
 function fmtNum(n) {
@@ -180,16 +181,21 @@ function renderOrders(orders) {
         o.resultPct === undefined || o.resultPct === null
           ? '-'
           : `${o.resultPct >= 0 ? '+' : ''}${o.resultPct.toFixed(2)}%`;
+      const entry =
+        o.entryLow === o.entryHigh
+          ? fmtNum(o.entryLow)
+          : `${fmtNum(o.entryLow)}&ndash;${fmtNum(o.entryHigh)}`;
+      const pair = o.source === 'manual' ? `${o.instId} <span class="hint-inline">(ручной)</span>` : o.instId;
       return `<tr>
         <td>${fmtTime(o.t)}</td>
-        <td>${o.instId}</td>
-        <td>${fmtNum(o.entryLow)}&ndash;${fmtNum(o.entryHigh)}</td>
+        <td>${pair}</td>
+        <td>${entry}</td>
         <td>${fmtNum(o.stop)}</td>
         <td>${fmtNum(o.tp1)}</td>
         <td>${fmtNum(o.tp2)}</td>
-        <td>${o.leverage}x</td>
-        <td>${o.marginUsdt} USDT</td>
-        <td>${o.score}/10</td>
+        <td>${o.leverage ? `${o.leverage}x` : '-'}</td>
+        <td>${o.marginUsdt ? `${o.marginUsdt} USDT` : '-'}</td>
+        <td>${o.score !== null && o.score !== undefined ? `${o.score}/10` : '-'}</td>
         <td><span class="badge ${o.status}">${STATUS_LABELS[o.status] || o.status}</span></td>
         <td>${result}</td>
       </tr>`;
