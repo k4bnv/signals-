@@ -203,16 +203,46 @@ function renderOrders(orders) {
     .join('');
 }
 
+function renderPositions(data) {
+  const body = document.getElementById('positionsBody');
+  if (!data.configured) {
+    body.innerHTML =
+      '<tr class="empty-row"><td colspan="7">OKX read-only ключи не заданы — мониторинг позиций недоступен</td></tr>';
+    return;
+  }
+  if (!data.positions.length) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="7">Открытых позиций на OKX сейчас нет</td></tr>';
+    return;
+  }
+  body.innerHTML = data.positions
+    .map((p) => {
+      const pnlCls = p.pnlPct > 0 ? 'green' : p.pnlPct < 0 ? 'red' : '';
+      const pnlStr = p.pnlPct === null ? '-' : `${p.pnlPct >= 0 ? '+' : ''}${p.pnlPct.toFixed(2)}%`;
+      return `<tr>
+        <td>${p.instId}</td>
+        <td>${p.posSide}</td>
+        <td>${fmtNum(p.avgPx)}</td>
+        <td>${fmtNum(p.markPx)}</td>
+        <td class="${pnlCls}">${pnlStr}</td>
+        <td>${p.lever}x</td>
+        <td>${p.liqPx ? fmtNum(p.liqPx) : '-'}</td>
+      </tr>`;
+    })
+    .join('');
+}
+
 async function refresh() {
   try {
-    const [status, stats, orders] = await Promise.all([
+    const [status, stats, orders, positions] = await Promise.all([
       fetch('/api/status').then((r) => r.json()),
       fetch('/api/stats').then((r) => r.json()),
       fetch('/api/orders?limit=200').then((r) => r.json()),
+      fetch('/api/positions').then((r) => r.json()),
     ]);
     renderStatus(status);
     renderStats(stats);
     renderOrders(orders);
+    renderPositions(positions);
   } catch (err) {
     console.error('refresh failed', err);
   }

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, hasTelegram, hasOkxKeys, getEditableSettings, updateSettings } from './config.js';
 import { getSignals, getStats, getState, isPaused } from './state.js';
+import { getPositions } from './okx.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
@@ -49,6 +50,34 @@ export function startServer() {
 
   app.get('/api/stats', (req, res) => {
     res.json(getStats());
+  });
+
+  // Live open positions straight from OKX (read-only), independent of the
+  // signal journal, so the dashboard can show what's *actually* open on the
+  // exchange right now vs. just signals that were sent but never acted on.
+  app.get('/api/positions', async (req, res) => {
+    if (!hasOkxKeys()) return res.json({ configured: false, positions: [] });
+    try {
+      const raw = await getPositions('SWAP');
+      const positions = raw
+        .filter((p) => Number(p.pos) !== 0)
+        .map((p) => {
+          const avgPx = Number(p.avgPx);
+          const markPx = Number(p.markPx || p.last || avgPx);
+          return {
+            instId: p.instId,
+            posSide: p.posSide,
+            avgPx,
+            markPx,
+            pnlPct: avgPx ? ((markPx - avgPx) / avgPx) * 100 : null,
+            lever: p.lever,
+            liqPx: p.liqPx ? Number(p.liqPx) : null,
+          };
+        });
+      res.json({ configured: true, positions });
+    } catch (err) {
+      res.status(502).json({ configured: true, error: err.message, positions: [] });
+    }
   });
 
   const port = config.web.port;

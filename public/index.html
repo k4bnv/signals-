@@ -26,7 +26,30 @@
   </section>
 
   <section class="panel">
+    <h2>Открытые позиции на OKX (сейчас)</h2>
+    <p class="hint">Читается напрямую с биржи (read-only), в реальном времени — независимо от журнала сигналов ниже.</p>
+    <div class="table-wrap">
+      <table id="positionsTable">
+        <thead>
+          <tr>
+            <th>Пара</th>
+            <th>Сторона</th>
+            <th>Цена входа</th>
+            <th>Текущая цена</th>
+            <th>PnL цены</th>
+            <th>Плечо</th>
+            <th>Ликвидация</th>
+          </tr>
+        </thead>
+        <tbody id="positionsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
     <h2>Ордера / сигналы</h2>
+    <p class="hint">"Открыт" = сигнал отправлен, закрытие ещё не зафиксировано. Это не значит, что позиция реально
+      открыта на бирже — сверяйся с таблицей выше.</p>
     <div class="table-wrap">
       <table id="ordersTable">
         <thead>

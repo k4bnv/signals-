@@ -66,6 +66,9 @@ main { padding: 20px 24px 60px; max-width: 1200px; margin: 0 auto; }
 .card .value.green { color: var(--green); }
 .card .value.red { color: var(--red); }
 
+td.green { color: var(--green); }
+td.red { color: var(--red); }
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
